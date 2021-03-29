@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
 const session = require("express-session");
+const MongoStore = require('connect-mongo')(session);
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
@@ -23,7 +24,8 @@ app.use(
   session({
     secret: "Our little secrect.",
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    store: new MongoStore(options)
   })
 );
 
