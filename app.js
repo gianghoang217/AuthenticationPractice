@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
 const session = require("express-session");
-const MongoStore = require('connect-mongo')(session);
+const MongoStore = require("connect-mongo")(session);
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
@@ -25,17 +25,20 @@ app.use(
     secret: "Our little secrect.",
     resave: false,
     saveUninitialized: false,
-    store: new MongoStore(options)
+    store: new MongoStore({ mongooseConnection: mongoose.connection })
   })
 );
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-mongoose.connect("mongodb://giang-admin:Test123@cluster0-shard-00-00.kn9yc.mongodb.net:27017,cluster0-shard-00-01.kn9yc.mongodb.net:27017,cluster0-shard-00-02.kn9yc.mongodb.net:27017/userDB?ssl=true&replicaSet=atlas-fwmoo2-shard-0&authSource=admin&retryWrites=true&w=majority", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+mongoose.connect(
+  "mongodb://giang-admin:Test123@cluster0-shard-00-00.kn9yc.mongodb.net:27017,cluster0-shard-00-01.kn9yc.mongodb.net:27017,cluster0-shard-00-02.kn9yc.mongodb.net:27017/userDB?ssl=true&replicaSet=atlas-fwmoo2-shard-0&authSource=admin&retryWrites=true&w=majority",
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  }
+);
 mongoose.set("useCreateIndex", true);
 
 const userSchema = new mongoose.Schema({
@@ -74,9 +77,12 @@ passport.use(
       passReqToCallback: true
     },
     function(request, accessToken, refreshToken, profile, cb) {
-      User.findOrCreate({ googleId: profile.id }, function(err, user) {
-        return cb(err, user);
-      });
+      User.findOrCreate(
+        { googleId: profile.id, username: profile.emails[0].value },
+        function(err, user) {
+          return cb(err, user);
+        }
+      );
     }
   )
 );
@@ -87,7 +93,7 @@ app.get("/", function(req, res) {
 
 app.get(
   "/auth/google",
-  passport.authenticate("google", { scope: ["profile"] })
+  passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
 app.get(
@@ -114,7 +120,7 @@ app.get("/secrets", function(req, res) {
       console.log(err);
     } else {
       if (foundUsers) {
-        res.render("secrets", {usersWithSecrets: foundUsers})
+        res.render("secrets", { usersWithSecrets: foundUsers });
       }
     }
   });
